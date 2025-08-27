@@ -1,0 +1,101 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "4.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.Account": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.Identity": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.TenantManagement": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "9.3.1",
+      "isInstalled": true
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "9.3.1",
+      "isInstalled": true
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "Semih.Application": {
+      "path": "src/Semih.Application/Semih.Application.abppkg",
+      "folder": "src"
+    },
+    "Semih.Application.Tests": {
+      "path": "test/Semih.Application.Tests/Semih.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "Semih.Domain.Shared": {
+      "path": "src/Semih.Domain.Shared/Semih.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "Semih.Application.Contracts": {
+      "path": "src/Semih.Application.Contracts/Semih.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "Semih.HttpApi": {
+      "path": "src/Semih.HttpApi/Semih.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "Semih.HttpApi.Client": {
+      "path": "src/Semih.HttpApi.Client/Semih.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "Semih.EntityFrameworkCore.Tests": {
+      "path": "test/Semih.EntityFrameworkCore.Tests/Semih.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "Semih.EntityFrameworkCore": {
+      "path": "src/Semih.EntityFrameworkCore/Semih.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "Semih.TestBase": {
+      "path": "test/Semih.TestBase/Semih.TestBase.abppkg",
+      "folder": "test"
+    },
+    "Semih.Domain.Tests": {
+      "path": "test/Semih.Domain.Tests/Semih.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "Semih.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/Semih.HttpApi.Client.ConsoleTestApp/Semih.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "Semih.DbMigrator": {
+      "path": "src/Semih.DbMigrator/Semih.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "Semih.Blazor": {
+      "path": "src/Semih.Blazor/Semih.Blazor.abppkg",
+      "folder": "src"
+    },
+    "Semih.Domain": {
+      "path": "src/Semih.Domain/Semih.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}

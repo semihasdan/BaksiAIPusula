@@ -1,0 +1,53 @@
+{
+  "id": "c36742d8-8745-43e2-9678-62b9ed948efa",
+  "template": "app",
+  "versions": {
+    "AbpFramework": "9.3.1",
+    "AbpStudio": "1.2.1",
+    "TargetDotnetFramework": "net9.0"
+  },
+  "modules": {
+    "Semih": {
+      "path": "Semih.abpmdl"
+    }
+  },
+  "runProfiles": {
+    "Default": {
+      "path": "etc/abp-studio/run-profiles/Default.abprun.json"
+    }
+  },
+  "options": {
+    "httpRequests": {
+      "ignoredUrls": [
+      
+      ]
+    }
+  },
+  "creatingStudioConfiguration": {
+    "template": "app",
+    "createdAbpStudioVersion": "1.2.1",
+    "tiered": "false",
+    "runInstallLibs": "true",
+    "useLocalReferences": "false",
+    "multiTenancy": "true",
+    "includeTests": "true",
+    "kubernetesConfiguration": "false",
+    "uiFramework": "blazor-server",
+    "mobileFramework": "none",
+    "distributedEventBus": "none",
+    "databaseProvider": "ef",
+    "runDbMigrator": "true",
+    "databaseManagementSystem": "postgresql",
+    "separateTenantSchema": "false",
+    "createInitialMigration": "true",
+    "theme": "leptonx-lite",
+    "themeStyle": "",
+    "themeMenuPlacement": "",
+    "mobileFramework": "none",
+    "publicWebsite": "false",
+    "socialLogin": "true",
+    "selectedLanguages": ["English", "English (United Kingdom)", "Chinese (Simplified)", "Spanish", "Arabic", "Hindi ", "Portuguese (Brazil)", "French", "Russian", "German (Germany)", "Turkish", "Italian", "Czech", "Hungarian", "Romanian (Romania)", "Swedish", "Finnish", "Slovak", "Icelandic", "Chinese (Traditional)", ],
+    "defaultLanguage": "English",
+    "createCommand": "abp new Semih -t app --ui-framework blazor-server --database-provider ef --database-management-system postgresql --theme leptonx-lite --without-cms-kit --dont-run-bundling -no-file-management"
+  }
+}

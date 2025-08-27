@@ -1,0 +1,14 @@
+{
+  "Culture": "en",
+  "Texts": {
+    "AppName": "Semih",
+    "Menu:Home": "Home",
+    "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information visit",
+    "Welcome": "Welcome",
+    "Age": "Age",
+    "Height": "Height",
+    "Weight": "Weight",
+    "Note": "Note",
+    "Menu:MyPatients": "My Patients"
+  }
+}
