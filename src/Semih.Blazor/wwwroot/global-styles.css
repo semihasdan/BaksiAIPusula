@@ -16,4 +16,19 @@
     right: 0.75rem;
     top: 0.5rem;
 }
+.menu-icon-ai {
+    background-image: url('/images/Baksi.png');
+    background-size: cover;        /* resmi tam doldurur */
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-block;         /* ikon gibi davranır */
+    width: 52px;                   /* istediğin boy */
+    height: 42px;                  /* istediğin boy */
+    line-height: 22px;             /* dikey ortalama */
+    vertical-align: middle;        /* yazıyla hizala */
+}
+
+
+
+
 

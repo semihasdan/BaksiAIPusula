@@ -1,5 +1,4 @@
 ﻿﻿using Microsoft.Extensions.DependencyInjection;
-using Semih.Doctors;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -30,6 +29,5 @@ public class SemihApplicationModule : AbpModule
             options.AddMaps<SemihApplicationModule>();
         });
         
-        context.Services.AddTransient<IDoctorAppService,  DoctorAppService>();
     }
 }

@@ -44,19 +44,6 @@ public class SemihMenuContributor : IMenuContributor
                 order: 1
             )
         );
-        
-        // Doktor menüsü için izin kontrolü
-        if (await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
-        {
-            context.Menu.AddItem(
-                new ApplicationMenuItem(
-                    "Semih.Doctors",
-                    "Doctor Menu",
-                    url: "/doctors",
-                    icon: "fa fa-user-md"
-                )
-            );
-        }
 
         // Yönetim menüsü
         var administration = context.Menu.GetAdministration();
@@ -69,6 +56,29 @@ public class SemihMenuContributor : IMenuContributor
         else
         {
             administration.TryRemoveMenuItem(TenantManagementMenuNames.GroupName);
+        }
+        // Doktor menüsü için izin kontrolü
+        if (await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
+        {
+            context.Menu.AddItem(
+                new ApplicationMenuItem(
+                    "Semih.Doctors",
+                    "AI Communications",
+                    url: "/ai-communications",
+                    icon: "menu-icon-ai"
+                )
+            );
+        }
+        if (!await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
+        {
+            context.Menu.AddItem(
+                new ApplicationMenuItem(
+                    "Semih.Doctors",
+                    "AI Communications",
+                    url: "/ask-ai",
+                    icon: "menu-icon-ai"
+                )
+            );
         }
 
         administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);

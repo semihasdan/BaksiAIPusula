@@ -1,0 +1,456 @@
+@page "/ai-communications"
+@using Volo.Abp.Identity
+@using Volo.Abp.Users
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Volo.Abp.Application.Dtos
+@using Blazorise
+@using Microsoft.JSInterop
+@using System.Linq
+@using Semih.Conversations
+@inject IIdentityUserAppService IdentityUserAppService
+@inject IConversationAppService ConversationAppService
+@inject IJSRuntime JSRuntime
+@inherits SemihComponentBase
+
+<Card>
+    <CardHeader>
+        <Row Class="justify-content-between">
+            <Column ColumnSize="ColumnSize.IsAuto">
+                <h2>
+                    <Icon Name="IconName.Comment" />
+                    AI Communications
+                </h2>
+                <p class="text-muted mb-0">Users created by you who have asked AI questions</p>
+            </Column>
+            <Column ColumnSize="ColumnSize.IsAuto">
+                <Button Color="Color.Primary" Clicked="LoadUsersAsync">
+                    <Icon Name="IconName.Sync" />
+                    Refresh
+                </Button>
+            </Column>
+        </Row>
+    </CardHeader>
+    <CardBody>
+        @if (IsLoading)
+        {
+            <div class="text-center p-4">
+                <Icon Name="IconName.Sync" />
+                <p>Loading users...</p>
+            </div>
+        }
+        else if (UserList.Any())
+        {
+            <Table Striped="true" Hoverable="true">
+                <TableHeader>
+                    <TableRow>
+                        <TableHeaderCell>User Name</TableHeaderCell>
+                        <TableHeaderCell>Email</TableHeaderCell>
+                        <TableHeaderCell>Last Question</TableHeaderCell>
+                        <TableHeaderCell>Pending Doctor Notes</TableHeaderCell>
+                        <TableHeaderCell>Actions</TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    @foreach (var user in UserList)
+                    {
+                        <TableRow>
+                            <TableRowCell>
+                                <Button Color="Color.Link" 
+                                        Clicked="() => OpenChatModal(user)"
+                                        class="text-left p-0">
+                                    <Icon Name="IconName.User" class="me-2" />
+                                    @user.UserName
+                                </Button>
+                            </TableRowCell>
+                            <TableRowCell>
+                                <span class="text-muted">@user.Email</span>
+                            </TableRowCell>
+                            <TableRowCell>
+                                @{
+                                    var lastConv = UserConversations.ContainsKey(user.Id) 
+                                        ? UserConversations[user.Id].FirstOrDefault() 
+                                        : null;
+                                }
+                                @if (lastConv != null)
+                                {
+                                    <small class="text-muted">@lastConv.ConversationStartTime.ToString("MM/dd/yyyy HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">No questions</small>
+                                }
+                            </TableRowCell>
+                            <TableRowCell>
+                                @{
+                                    var pendingCount = UserConversations.ContainsKey(user.Id) 
+                                        ? UserConversations[user.Id].Count(c => !c.IsCompleted) 
+                                        : 0;
+                                }
+                                @if (pendingCount > 0)
+                                {
+                                    <Badge Color="Color.Warning">@pendingCount pending</Badge>
+                                }
+                                else
+                                {
+                                    <Badge Color="Color.Success">All completed</Badge>
+                                }
+                            </TableRowCell>
+                            <TableRowCell>
+                                <Button Color="Color.Primary" 
+                                        Size="Size.Small"
+                                        Clicked="() => OpenChatModal(user)">
+                                    <Icon Name="IconName.Comment" />
+                                    View Questions
+                                </Button>
+                            </TableRowCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
+        }
+        else
+        {
+            <Alert Color="Color.Info">
+                <Icon Name="IconName.Info" />
+                No users with AI questions found. Users you created who have asked questions on the Ask-AI page will appear here.
+            </Alert>
+        }
+    </CardBody>
+</Card>
+
+<!-- Chat History Modal -->
+<Modal @ref="ChatModalRef" Size="ModalSize.ExtraLarge">
+    <ModalHeader>
+        <ModalTitle>
+            <Icon Name="IconName.Comment" />
+            AI Questions & Responses - @SelectedUser?.UserName
+        </ModalTitle>
+        <CloseButton />
+    </ModalHeader>
+    <ModalBody>
+        <div class="chat-history-container" style="max-height: 600px; overflow-y: auto;">
+            @if (ConversationHistory.Any())
+            {
+                @foreach (var conversation in ConversationHistory.OrderByDescending(c => c.ConversationStartTime))
+                {
+                    <Card class="mb-3 conversation-card">
+                        <CardBody>
+                            <div class="conversation-header mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <Icon Name="IconName.Clock" />
+                                        @conversation.ConversationStartTime.ToString("MMMM dd, yyyy - HH:mm")
+                                    </h6>
+                                    @if (conversation.IsCompleted)
+                                    {
+                                        <Badge Color="Color.Success">
+                                            <Icon Name="IconName.Check" />
+                                            Completed
+                                        </Badge>
+                                    }
+                                    else
+                                    {
+                                        <Badge Color="Color.Warning">
+                                            <Icon Name="IconName.Clock" />
+                                            Pending Doctor Note
+                                        </Badge>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <!-- Customer Question -->
+                            <div class="message-section mb-3">
+                                <div class="message-header">
+                                    <Icon Name="IconName.User" class="text-primary" />
+                                    <strong>User Question:</strong>
+                                </div>
+                                <div class="message-content p-2 bg-light rounded">
+                                    @conversation.CustomerQuestion
+                                </div>
+                            </div>
+                            
+                            <!-- AI Response -->
+                            <div class="message-section mb-3">
+                                <div class="message-header">
+                                    <Icon Name="IconName.Desktop" class="text-info" />
+                                    <strong>AI Response:</strong>
+                                </div>
+                                <div class="message-content p-2 bg-info bg-opacity-10 rounded">
+                                    @conversation.AiResponse
+                                </div>
+                            </div>
+                            
+                            <!-- Doctor Note Section -->
+                            <div class="doctor-note-section">
+                                <div class="message-header">
+                                    <Icon Name="IconName.Heart" class="text-success" />
+                                    <strong>Doctor Note:</strong>
+                                </div>
+                                @if (conversation.IsCompleted && !string.IsNullOrEmpty(conversation.DoctorNote))
+                                {
+                                    <div class="message-content p-2 bg-success bg-opacity-10 rounded">
+                                        @conversation.DoctorNote
+                                    </div>
+                                    @if (conversation.ConversationEndTime.HasValue)
+                                    {
+                                        <small class="text-muted">
+                                            <Icon Name="IconName.Check" />
+                                            Completed on @conversation.ConversationEndTime.Value.ToString("MMMM dd, yyyy - HH:mm")
+                                        </small>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="doctor-note-input mt-2">
+                                        <MemoEdit Text="@GetTempDoctorNote(conversation.Id)" 
+                                                  TextChanged="@(value => SetTempDoctorNote(conversation.Id, value))"
+                                                  Placeholder="Add your professional note or adjustment to the AI response..."
+                                                  Rows="3" />
+                                        <div class="mt-2">
+                                            <Button Color="Color.Success" 
+                                                    Size="Size.Small"
+                                                    Clicked="() => SaveDoctorNote(conversation.Id)"
+                                                    Disabled="string.IsNullOrWhiteSpace(GetTempDoctorNote(conversation.Id))">
+                                                <Icon Name="IconName.Save" />
+                                                Save Doctor Note
+                                            </Button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </CardBody>
+                    </Card>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted p-4">
+                    <Icon Name="IconName.Comment" Style="font-size: 3rem; opacity: 0.3;" />
+                    <p>No questions found for this user.</p>
+                </div>
+            }
+        </div>
+    </ModalBody>
+    <ModalFooter>
+        <Button Color="Color.Secondary" Clicked="CloseChatModal">
+            <Icon Name="IconName.Times" />
+            Close
+        </Button>
+    </ModalFooter>
+</Modal>
+
+@code {
+    private List<IdentityUserDto> UserList = new();
+    private Dictionary<Guid, List<ConversationDto>> UserConversations = new();
+    private Modal ChatModalRef = default!;
+    private IdentityUserDto? SelectedUser;
+    private List<ConversationDto> ConversationHistory = new();
+    private Dictionary<Guid, string> _tempDoctorNotes = new();
+    private bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Get all users created by current user
+            var usersCreatedByMe = await GetUsersCreatedByCurrentUser();
+            
+            // Get users who have asked AI questions
+            var usersWithQuestions = await GetUsersWithAIQuestions(usersCreatedByMe);
+            
+            UserList = usersWithQuestions;
+            
+            // Load conversation summaries for each user
+            UserConversations.Clear();
+            foreach (var user in UserList)
+            {
+                var conversations = await ConversationAppService.GetByCustomerIdAsync(user.Id);
+                UserConversations[user.Id] = conversations.Items.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<List<IdentityUserDto>> GetUsersCreatedByCurrentUser()
+    {
+        try
+        {
+            // Get all users and filter by CreatorId
+            var result = await IdentityUserAppService.GetListAsync(new GetIdentityUsersInput
+            {
+                MaxResultCount = 1000,
+                SkipCount = 0
+            });
+
+            // Filter users created by current user
+            var currentUserId = CurrentUser.Id;
+            if (!currentUserId.HasValue)
+                return new List<IdentityUserDto>();
+
+            return result.Items
+                .Where(u => u.CreatorId == currentUserId.Value)
+                .ToList();
+        }
+        catch (Exception)
+        {
+            return new List<IdentityUserDto>();
+        }
+    }
+
+    private async Task<List<IdentityUserDto>> GetUsersWithAIQuestions(List<IdentityUserDto> users)
+    {
+        var usersWithQuestions = new List<IdentityUserDto>();
+
+        foreach (var user in users)
+        {
+            try
+            {
+                // Check if user has any conversations
+                var conversations = await ConversationAppService.GetByCustomerIdAsync(user.Id);
+                if (conversations.Items.Any())
+                {
+                    usersWithQuestions.Add(user);
+                }
+            }
+            catch (Exception)
+            {
+                // If error getting conversations for this user, skip them
+                continue;
+            }
+        }
+
+        return usersWithQuestions;
+    }
+
+    private async Task OpenChatModal(IdentityUserDto user)
+    {
+        SelectedUser = user;
+        
+        // Load conversation history for this user
+        await LoadConversationHistory(user.Id);
+        
+        await ChatModalRef.Show();
+    }
+
+    private async Task CloseChatModal()
+    {
+        await ChatModalRef.Hide();
+        SelectedUser = null;
+        ConversationHistory.Clear();
+        _tempDoctorNotes.Clear();
+    }
+
+    private async Task LoadConversationHistory(Guid userId)
+    {
+        try
+        {
+            var result = await ConversationAppService.GetByCustomerIdAsync(userId);
+            ConversationHistory = result.Items.ToList();
+            
+            // Initialize temp doctor notes for incomplete conversations
+            _tempDoctorNotes.Clear();
+            foreach (var conversation in ConversationHistory.Where(c => !c.IsCompleted))
+            {
+                _tempDoctorNotes[conversation.Id] = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+    }
+
+    private async Task SaveDoctorNote(Guid conversationId)
+    {
+        try
+        {
+            var doctorNote = GetTempDoctorNote(conversationId);
+            
+            if (string.IsNullOrWhiteSpace(doctorNote))
+                return;
+
+            await ConversationAppService.UpdateAsync(conversationId, new UpdateConversationDto
+            {
+                DoctorNote = doctorNote.Trim()
+            });
+
+            // Refresh the conversation history
+            if (SelectedUser != null)
+            {
+                await LoadConversationHistory(SelectedUser.Id);
+            }
+            
+            // Refresh the user list to update badges
+            await LoadUsersAsync();
+
+            await Message.Success("Doctor note saved successfully! Conversation marked as completed.");
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+    }
+
+    private string GetTempDoctorNote(Guid conversationId)
+    {
+        return _tempDoctorNotes.GetValueOrDefault(conversationId, string.Empty);
+    }
+
+    private void SetTempDoctorNote(Guid conversationId, string value)
+    {
+        _tempDoctorNotes[conversationId] = value ?? string.Empty;
+    }
+}
+
+<style>
+    .conversation-card {
+        border-left: 4px solid #007bff;
+    }
+
+    .conversation-card .card-body {
+        padding: 1rem;
+    }
+
+    .message-section {
+        margin-bottom: 1rem;
+    }
+
+    .message-header {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .message-content {
+        margin-left: 1.5rem;
+        line-height: 1.4;
+    }
+
+    .doctor-note-input textarea {
+        width: 100%;
+    }
+
+    .chat-history-container {
+        padding-right: 0.5rem;
+    }
+
+    .conversation-card:last-child {
+        margin-bottom: 0 !important;
+    }
+</style>

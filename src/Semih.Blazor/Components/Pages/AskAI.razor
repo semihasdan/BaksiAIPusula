@@ -1,0 +1,192 @@
+@page "/ask-ai"
+@using Volo.Abp.Users
+@using Blazorise
+@using Volo.Abp.TenantManagement
+@using Semih.Conversations
+@inject IJSRuntime JSRuntime
+@inject IConversationAppService ConversationAppService
+@inherits SemihComponentBase
+
+<Card>
+    <CardHeader>
+        <h2>
+            <span style="font-size: 1.5em;">🤖</span>
+            Ask AI Assistant
+        </h2>
+        <p class="text-muted mb-0">Get instant help from our AI assistant. A doctor will review and provide additional insights.</p>
+    </CardHeader>
+    <CardBody>
+        @if (IsSubmitting)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Processing your question...</p>
+            </div>
+        }
+        else if (ShowResult)
+        {
+            <Alert Color="Color.Success" class="mb-4">
+                <Icon Name="IconName.CheckCircle" />
+                <strong>Your question has been submitted!</strong> Our AI has provided an initial response, and a doctor will review it shortly.
+            </Alert>
+            
+            <Card class="conversation-result">
+                <CardBody>
+                    <div class="mb-3">
+                        <h6>
+                            <span style="color: #007bff;">👤</span>
+                            Your Question:
+                        </h6>
+                        <p class="ms-3 p-2 bg-light rounded">@CustomerQuestion</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>
+                            <span style="color: #17a2b8;">🤖</span>
+                            AI Response:
+                        </h6>
+                        <p class="ms-3 p-2 bg-info bg-opacity-10 rounded">@AiResponse</p>
+                    </div>
+                    
+                    <Alert Color="Color.Info">
+                        <Icon Name="IconName.Info" />
+                        <strong>Next Steps:</strong> A doctor will review this conversation and may provide additional insights or corrections. You'll be notified once the review is complete.
+                    </Alert>
+                    
+                    <div class="mt-3">
+                        <Button Color="Color.Primary" Clicked="StartNewConversation">
+                            <Icon Name="IconName.Comment" />
+                            Ask Another Question
+                        </Button>
+                    </div>
+                </CardBody>
+            </Card>
+        }
+        else
+        {
+            <Form>
+                <Field>
+                    <FieldLabel>Your Question</FieldLabel>
+                    <MemoEdit @bind-Text="CustomerQuestion" 
+                              Placeholder="Please describe your health concern or question in detail..."
+                              Rows="4"
+                              MaxLength="2000" />
+                    <FieldHelp>Be as specific as possible to get the best AI assistance.</FieldHelp>
+                </Field>
+                
+                <div class="d-flex justify-content-end">
+                    <Button Color="Color.Primary" 
+                            Clicked="SubmitQuestion"
+                            Disabled="string.IsNullOrWhiteSpace(CustomerQuestion)">
+                        <Icon Name="IconName.Send" />
+                        Submit Question
+                    </Button>
+                </div>
+            </Form>
+        }
+    </CardBody>
+</Card>
+
+@code {
+    private string CustomerQuestion = string.Empty;
+    private string AiResponse = string.Empty;
+    private bool IsSubmitting = false;
+    private bool ShowResult = false;
+
+    private async Task SubmitQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(CustomerQuestion))
+            return;
+
+        IsSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simulate AI processing
+            await Task.Delay(2000);
+        
+            // Generate AI response
+            AiResponse = await GenerateAIResponse(CustomerQuestion);
+        
+            // Save to database using ConversationAppService
+            await SaveConversationToDatabase();
+        
+            ShowResult = true;
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+        finally
+        {
+            IsSubmitting = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task SaveConversationToDatabase()
+    {
+        try
+        {
+            // Use current user's ID as customer ID
+            var customerId = CurrentUser.Id ?? Guid.Empty;
+            
+            if (customerId == Guid.Empty)
+            {
+                // Skip saving if no user ID available
+                return;
+            }
+
+            var createConversationDto = new CreateConversationDto
+            {
+                CustomerId = customerId, // Now stores User ID instead of Tenant ID
+                CustomerQuestion = CustomerQuestion,
+                AiResponse = AiResponse
+            };
+
+            await ConversationAppService.CreateAsync(createConversationDto);
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+    }   
+
+    private async Task<string> GenerateAIResponse(string userMessage)
+    {
+        // Static AI responses as requested
+        var responses = new[]
+        {
+            $"Based on your question about '{userMessage}', I recommend consulting with a healthcare professional for proper evaluation. Here are some general considerations: It's important to monitor your symptoms and seek medical attention if they worsen or persist.",
+            $"Thank you for your question regarding '{userMessage}'. While I can provide general information, it's important to get personalized medical advice from a qualified doctor. Consider scheduling an appointment to discuss your concerns in detail.",
+            $"Your concern about '{userMessage}' is important. Here's some general guidance: Stay hydrated, get adequate rest, and monitor your symptoms. However, please remember that this should not replace professional medical consultation.",
+            $"I understand your question about '{userMessage}'. For your safety and best care, I'd recommend discussing this with a healthcare provider who can properly assess your situation and provide personalized treatment recommendations."
+        };
+
+        var random = new Random();
+        await Task.Delay(100); // Simulate processing time
+        return responses[random.Next(responses.Length)];
+    }
+
+    private void StartNewConversation()
+    {
+        CustomerQuestion = string.Empty;
+        AiResponse = string.Empty;
+        ShowResult = false;
+        StateHasChanged();
+    }
+}
+
+<style>
+    .conversation-result {
+        border-left: 4px solid #007bff;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>
