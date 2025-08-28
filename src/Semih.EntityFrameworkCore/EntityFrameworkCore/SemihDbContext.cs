@@ -14,7 +14,7 @@ using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
-using Semih.Doctors;    // Doctor entity'si için
+using Semih.Conversations;
 
 namespace Semih.EntityFrameworkCore;
 
@@ -27,6 +27,7 @@ public class SemihDbContext :
     IIdentityDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
+    public DbSet<Conversation> Conversations { get; set; }
 
     #region Entities from the modules
 
@@ -56,7 +57,6 @@ public class SemihDbContext :
     public DbSet<TenantConnectionString> TenantConnectionStrings { get; set; }
 
     #endregion
-    public DbSet<Doctor> Doctors { get; set; }
     public SemihDbContext(DbContextOptions<SemihDbContext> options)
         : base(options)
     {
@@ -79,14 +79,19 @@ public class SemihDbContext :
         builder.ConfigureTenantManagement();
         builder.ConfigureBlobStoring();
         
-        /* Configure your own tables/entities inside here */
-        builder.Entity<Doctor>(b =>
+        // Configure Conversation entity
+        builder.Entity<Conversation>(b =>
         {
-            b.ToTable(SemihConsts.DbTablePrefix + "Doctors", SemihConsts.DbSchema);
+            b.ToTable("Conversations");
             b.ConfigureByConvention();
-            b.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
-            b.Property(x => x.LastName).IsRequired().HasMaxLength(100);
-            b.Property(x => x.Specialty).IsRequired().HasMaxLength(200);
+            
+            b.Property(x => x.CustomerQuestion).IsRequired().HasMaxLength(2000);
+            b.Property(x => x.AiResponse).IsRequired().HasMaxLength(4000);
+            b.Property(x => x.DoctorNote).HasMaxLength(2000);
+            
+            b.HasIndex(x => x.CustomerId);
+            b.HasIndex(x => x.IsCompleted);
+            b.HasIndex(x => x.ConversationStartTime);
         });
     }
 }
