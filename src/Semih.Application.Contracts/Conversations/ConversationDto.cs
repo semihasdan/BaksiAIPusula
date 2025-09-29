@@ -13,6 +13,8 @@ namespace Semih.Conversations
         public bool IsCompleted { get; set; }
         public DateTime ConversationStartTime { get; set; }
         public DateTime? ConversationEndTime { get; set; }
+        public Guid? DoctorId { get; set; }
+        public string? DoctorName { get; set; }
     }
 
     public class CreateConversationDto
@@ -20,15 +22,19 @@ namespace Semih.Conversations
         public Guid CustomerId { get; set; }
         public string CustomerQuestion { get; set; }
         public string AiResponse { get; set; }
+        public Guid? DoctorId { get; set; }
+
     }
 
     public class UpdateConversationDto
     {
         public string DoctorNote { get; set; }
+
     }
 
     public class GetConversationsInput : PagedAndSortedResultRequestDto
     {
+        public Guid? DoctorId { get; set; }
         public Guid? CustomerId { get; set; }
         public bool? IsCompleted { get; set; }
     }

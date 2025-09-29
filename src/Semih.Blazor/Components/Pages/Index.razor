@@ -1,275 +1,587 @@
-﻿@page "/"
+@page "/"
+@using Semih.Permissions
+@using Volo.Abp.Authorization
 @inherits SemihComponentBase
+@using Volo.Abp.Authorization.Permissions;
+@using Semih.Conversations
+@using Volo.Abp.Identity
+@using Blazorise
+@using System.Linq
+@using Microsoft.Extensions.Logging
+@inject IPermissionChecker _permissionChecker
+@inject IConversationAppService ConversationAppService
+@inject IIdentityUserAppService IdentityUserAppService
 
-<div class="row mb-3">
-    <div class="col-xl-6 col-12 d-flex">
-        <div class="card h-lg-100 w-100 overflow-hidden">
-            <div class="card-body">
-                <div class="starting-content pe-5">
-                    @if (!CurrentUser.IsAuthenticated)
-                    {
-                        <h3>@L["Welcome"]</h3>
-                        <p class="lead text-muted mb-2">@L["LongWelcomeMessage"]</p>
-                        <a @onclick="Login" class="btn btn-primary mb-4"><i class="fa-solid fa-right-to-bracket me-1"></i><span>@L["Login"]</span></a>
-                    }
-
-                    <h4>Getting Started</h4>
-                    <p class="text-muted mb-2">Learn how to create and run
-                        a
-                        new web application using the application startup
-                        template.</p>
-                    <a href="https://abp.io/docs/latest/getting-started" class="btn btn-brand mb-2" target="_blank">Getting
-                        Started</a>
-
-                    <h4>Web Application Development Tutorial</h4>
-                    <p class="text-muted mb-2">Learn how to build an ABP based
-                        web
-                        application named Acme.BookStore.</p>
-                    <a href="https://abp.io/docs/latest/tutorials/book-store/part-1?UI=MVC&DB=EF" class="btn btn-primary soft mb-2" target="_blank">Explore Tutorial</a>
-                </div>
-                <img class="card-bg-image" src="/images/getting-started/bg-01.png">
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 d-flex">
-        <div class="row">
-            <div class="col-12 d-flex">
-                <div class="card overflow-hidden mb-3">
-                    <div class="card-body d-flex flex-column">
-                        <div class="abp-support abp-logo mb-2"></div>
-                        <p class="text-muted mb-2">You can check for
-                            similar problems and solutions, or open a
-                            new topic to discuss your specific issue.</p>
-                        <a href="https://abp.io/support/questions" class="btn btn-brand soft" target="_blank">Visit Support</a>
-                        <img style="margin-bottom: -24px;" class="w-100 mt-auto" src="/images/getting-started/img-support.png">
+@* AuthorizeView kullanarak direkt olarak yetki kontrolü yapabiliriz *@
+<AuthorizeView Policy="@SemihPermissions.Doctors.Default">
+    <Authorized>
+       <div class="row">
+            <!-- Doctor Information Card -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5>
+                            <img src="/Users/semihasdan/Documents/software/c#/C#-BaksıAI/Semih/src/Semih.Blazor/wwwroot/images/Baksi.png" alt="Baksi AI" style="width: 24px; height: 24px; margin-right: 8px;" />
+                            Doctor Dashboard
+                        </h5>
+                        <p class="text-muted mb-0">Your profile and statistics</p>
+                    </div>
+                    <div class="card-body">
+                        @if (IsLoadingDoctorInfo)
+                        {
+                            <div class="text-center p-3">
+                                <Icon Name="IconName.Sync" />
+                                <p>Loading your information...</p>
+                            </div>
+                        }
+                        else if (CurrentUser.IsAuthenticated)
+                        {
+                            <div class="text-center">
+                                <Icon Name="IconName.User" Style="font-size: 4rem; color: #007bff;" />
+                                <h4 class="mt-3">@CurrentUser.Name </h4>
+                                <p class="text-muted">@CurrentUser.Email</p>
+                                <p class="text-info">@CurrentUser.UserName</p>
+                                
+                                <div class="mt-4 pt-3 border-top">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="stat-item">
+                                                <h6 class="mb-0 text-primary">@DoctorPatients.Count</h6>
+                                                <small class="text-muted">Total Patients</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="stat-item">
+                                                <h6 class="mb-0 text-success">@AllConversations.Count(c => c.IsCompleted)</h6>
+                                                <small class="text-muted">Completed Notes</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row text-center mt-3">
+                                        <div class="col-6">
+                                            <div class="stat-item">
+                                                <h6 class="mb-0 text-warning">@AllConversations.Count(c => !c.IsCompleted)</h6>
+                                                <small class="text-muted">Pending Review</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="stat-item">
+                                                <h6 class="mb-0 text-info">@AllConversations.Count</h6>
+                                                <small class="text-muted">Total Questions</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
-            <div class="col-12 d-flex">
-                <div class="card h-md-100 overflow-hidden">
-                    <div class="card-body pb-0">
-                        <div class="abp-blog abp-logo mb-2"></div>
-                        <p class="text-muted mb-2">You can find content
-                            on .NET development, cross-platform, ASP.NET
-                            application templates, ABP-related news, and
-                            more.</p>
-                        <a href="https://abp.io/blog" class="btn btn-brand soft" target="_blank">Visit Blog</a>
-
-                        <img style="margin-bottom: -24px;" class="w-100 mt-auto" src="/images/getting-started/img-blog.png">
+            
+            <!-- Patients List Card -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5>
+                            <Icon Name="IconName.Users" class="me-2" />
+                            My Patients
+                        </h5>
+                        <p class="text-muted mb-0">Patients you created</p>
+                    </div>
+                    <div class="card-body">
+                        @if (IsLoadingPatients)
+                        {
+                            <div class="text-center p-3">
+                                <Icon Name="IconName.Sync" />
+                                <p>Loading patients...</p>
+                            </div>
+                        }
+                        else if (DoctorPatients.Any())
+                        {
+                            <div class="patient-list" style="max-height: 400px; overflow-y: auto;">
+                                @foreach (var patient in DoctorPatients)
+                                {
+                                    var patientConversations = AllConversations.Where(c => c.CustomerId == patient.Id).ToList();
+                                    var pendingCount = patientConversations.Count(c => !c.IsCompleted);
+                                    
+                                    <div class="patient-item p-2 mb-2 border rounded">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">@patient.Name @patient.Surname</h6>
+                                                <small class="text-muted">@patient.Email</small>
+                                                <br />
+                                                <small class="text-info">
+                                                    Created: @patient.CreationTime.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </div>
+                                            <div class="text-end">
+                                                @if (pendingCount > 0)
+                                                {
+                                                    <Badge Color="Color.Warning" class="mb-1">
+                                                        @pendingCount Pending
+                                                    </Badge>
+                                                }
+                                                else if (patientConversations.Any())
+                                                {
+                                                    <Badge Color="Color.Success" class="mb-1">
+                                                        All Reviewed
+                                                    </Badge>
+                                                }
+                                                <br />
+                                                <small class="text-muted">
+                                                    @patientConversations.Count question(s)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-3">
+                                <Icon Name="IconName.Users" Style="font-size: 3rem; opacity: 0.3;" />
+                                <p>No patients found.</p>
+                                <p class="small">Patients you create will appear here.</p>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 d-flex">
-        <div class="card h-100 overflow-hidden">
-            <div class="card-body">
-                <div class="abp-community abp-logo mb-2"></div>
-                <p class="lead text-muted">A unique community platform
-                    for <span class="fw-bold">ABP Lovers!</span></p>
-                <p class="text-muted mb-2">Explore all ABP users'
-                    experiences with the ABP Framework, discover
-                    articles and videos on how to use ABP, and join
-                    raffles for a chance to win surprise gifts!</p>
-                <a class="btn btn-brand soft mb-3" href="https://abp.io/community/" target="_blank">Join ABP Community</a>
-            </div>
-            <img class="mt-3" src="/images/getting-started/img-community.png">
-        </div>
-    </div>
-</div>
-
-<div class="row mb-3">
-    <div class="col-xl-3 col-lg-4">
-        <div class="card h-100 w-100 d-flex flex-column">
-            <div class="card-header">
-                <div class="card-title text-body">More from ABP.IO</div>
-            </div>
-            <div class="card-body pt-0">
-
-                <div>
-                    <table class="table mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <div class="rounded-circle me-2
-                                        flex-center bg-brand soft" style="width: 20px; height:
-                                        20px;"><i class="bi bi-check fs-4"></i></div>
-                                    <div> Latest Release Logs </div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://github.com/abpframework/abp/releases" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <div class="rounded-circle me-2
-                                        flex-center bg-brand soft" style="width: 20px; height:
-                                        20px;"><i class="bi bi-check fs-4"></i></div>
-                                    <div> Video Courses </div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://abp.io/video-courses/essentials" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <div class="rounded-circle me-2
-                                        flex-center bg-brand soft" style="width: 20px; height:
-                                        20px;"><i class="bi bi-check fs-4"></i></div>
-                                    <div> Samples </div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://abp.io/docs/latest/Samples/Index" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <div class="rounded-circle me-2
-                                        flex-center bg-brand soft" style="width: 20px; height:
-                                        20px;"><i class="bi bi-check fs-4"></i></div>
-                                    <div> Books </div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://abp.io/books" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex border-bottom-0">
-                                    <div class="rounded-circle me-2
-                                        flex-center bg-brand soft" style="width: 20px; height:
-                                        20px;"><i class="bi bi-check fs-4"></i></div>
-                                    <div> FAQ </div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25
-                                    border-bottom-0">
-                                    <a href="https://abp.io/faq" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-6 col-lg-8 d-flex">
-        <div class="card h-100 w-100 d-flex flex-column">
-            <div class="card-body d-flex">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <p class="text-muted mb-0">THE OFFICIAL GUIDE</p>
-                        <h3>Mastering ABP Framework</h3>
-                        <p class="text-muted">Written by the creator of the ABP
-                            Framework, this book will help you gain a complete
-                            understanding of the framework
-                            and modern web application development techniques.</p>
-                        <div class="d-md-flex mb-2 mb-md-0">
-                            <a href="https://www.amazon.com/gp/product/B097Z2DM8Q" target="_blank" class="btn btn-primary soft
-                                me-md-2 mb-2 mb-md-0">
-                                Buy on Amazon US
-                            </a>
-                            <a href="https://www.packtpub.com/product/mastering-abp-framework/9781801079242" target="_blank" class="btn btn-primary soft mb-2
-                                mb-md-0">
-                                Buy on PACKT
-                            </a>
+            
+            <!-- Recent Conversations Card -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>
+                                <img src="~/images/Baksi.png" alt="Baksi AI" style="width: 20px; height: 20px; margin-right: 8px;" />
+                                Recent AI Conversations
+                            </h5>
+                            <p class="text-muted mb-0">Latest patient questions</p>
                         </div>
+                        @if (AllConversations.Any(c => !c.IsCompleted))
+                        {
+                            <Badge Color="Color.Warning">
+                                @AllConversations.Count(c => !c.IsCompleted) Pending
+                            </Badge>
+                        }
                     </div>
-                    <div class="col-md-4 text-center">
-                        <img src="/images/getting-started/book.png" class="img-fluid">
+                    <div class="card-body">
+                        @if (IsLoadingConversations)
+                        {
+                            <div class="text-center p-3">
+                                <Icon Name="IconName.Sync" />
+                                <p>Loading conversations...</p>
+                            </div>
+                        }
+                        else if (AllConversations.Any())
+                        {
+                            <div class="conversation-list" style="max-height: 400px; overflow-y: auto;">
+                                @foreach (var conversation in AllConversations.OrderByDescending(c => c.ConversationStartTime).Take(10))
+                                {
+                                    var patient = DoctorPatients.FirstOrDefault(p => p.Id == conversation.CustomerId);
+                                    
+                                    <div class="conversation-item p-2 mb-2 border rounded @(conversation.IsCompleted ? "border-success" : "border-warning")">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <small class="text-muted">
+                                                <Icon Name="IconName.User" />
+                                                @(patient?.Name ?? "Unknown") @(patient?.Surname ?? "Patient")
+                                            </small>
+                                            @if (conversation.IsCompleted)
+                                            {
+                                                <Badge Color="Color.Success" Size="Size.Small">
+                                                    <Icon Name="IconName.Check" />
+                                                </Badge>
+                                            }
+                                            else
+                                            {
+                                                <Badge Color="Color.Warning" Size="Size.Small">
+                                                    <Icon Name="IconName.Clock" />
+                                                </Badge>
+                                            }
+                                        </div>
+                                        
+                                        <div class="mb-1">
+                                            <small class="fw-bold">Question:</small>
+                                            <div class="small">
+                                                @(conversation.CustomerQuestion.Length > 100 ? 
+                                                    conversation.CustomerQuestion.Substring(0, 100) + "..." : 
+                                                    conversation.CustomerQuestion)
+                                            </div>
+                                        </div>
+                                        
+                                        @if (conversation.IsCompleted && !string.IsNullOrEmpty(conversation.DoctorNote))
+                                        {
+                                            <div class="mb-1">
+                                                <small class="fw-bold text-success">Your Note:</small>
+                                                <div class="small text-success">
+                                                    @(conversation.DoctorNote.Length > 80 ? 
+                                                        conversation.DoctorNote.Substring(0, 80) + "..." : 
+                                                        conversation.DoctorNote)
+                                                </div>
+                                            </div>
+                                        }
+                                        
+                                        <small class="text-muted">
+                                            <Icon Name="IconName.Clock" />
+                                            @conversation.ConversationStartTime.ToString("MMM dd, HH:mm")
+                                        </small>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-3">
+                                <img src="~/images/Baksi.png" alt="Baksi AI" style="width: 48px; height: 48px; opacity: 0.3; margin-bottom: 10px;" />
+                                <p>No conversations yet.</p>
+                                <p class="small">Patient questions will appear here.</p>
+                            </div>
+                        }
                     </div>
                 </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        @* PATIENT VIEW - Shows their AI communications and doctor info *@
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5>
+                            <Icon Name="IconName.Comment" class="me-2" />
+                            My AI Communications
+                        </h5>
+                        <p class="text-muted mb-0">Your past AI questions and responses</p>
+                    </div>
+                    <div class="card-body">
+                        @if (IsLoadingConversations)
+                        {
+                            <div class="text-center p-4">
+                                <Icon Name="IconName.Sync" />
+                                <p>Loading your conversations...</p>
+                            </div>
+                        }
+                        else if (PatientConversations.Any())
+                        {
+                            <div class="conversation-list" style="max-height: 500px; overflow-y: auto;">
+                                @foreach (var conversation in PatientConversations.OrderByDescending(c => c.ConversationStartTime))
+                                {
+                                    <div class="card mb-3 conversation-item">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <small class="text-muted">
+                                                    <Icon Name="IconName.Clock" />
+                                                    @conversation.ConversationStartTime.ToString("MMM dd, yyyy - HH:mm")
+                                                </small>
+                                                @if (conversation.IsCompleted)
+                                                {
+                                                    <Badge Color="Color.Success" class="ms-2">
+                                                        <Icon Name="IconName.Check" />
+                                                        Completed
+                                                    </Badge>
+                                                }
+                                                else
+                                                {
+                                                    <Badge Color="Color.Warning" class="ms-2">
+                                                        <Icon Name="IconName.Clock" />
+                                                        Pending
+                                                    </Badge>
+                                                }
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <strong class="text-primary">Your Question:</strong>
+                                                <div class="p-2 bg-light rounded mt-1">
+                                                    @conversation.CustomerQuestion
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <strong class="text-info">AI Response:</strong>
+                                                <div class="p-2 bg-info bg-opacity-10 rounded mt-1">
+                                                    @conversation.AiResponse
+                                                </div>
+                                            </div>
+                                            
+                                            @if (conversation.IsCompleted && !string.IsNullOrEmpty(conversation.DoctorNote))
+                                            {
+                                                <div>
+                                                    <strong class="text-success">Doctor's Note:</strong>
+                                                    <div class="p-2 bg-success bg-opacity-10 rounded mt-1">
+                                                        @conversation.DoctorNote
+                                                    </div>
+                                                    @if (conversation.ConversationEndTime.HasValue)
+                                                    {
+                                                        <small class="text-muted mt-1 d-block">
+                                                            Completed on @conversation.ConversationEndTime.Value.ToString("MMM dd, yyyy - HH:mm")
+                                                        </small>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-4">
+                                <Icon Name="IconName.Comment" Style="font-size: 3rem; opacity: 0.3;" />
+                                <p>You haven't asked any AI questions yet.</p>
+                                <p class="small">Visit the Ask-AI page to start a conversation.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5>
+                            <Icon Name="IconName.Heart" class="me-2" />
+                            Your Doctor
+                        </h5>
+                        <p class="text-muted mb-0">Doctor who created your account</p>
+                    </div>
+                    <div class="card-body">
+                        @if (IsLoadingDoctor)
+                        {
+                            <div class="text-center p-3">
+                                <Icon Name="IconName.Sync" />
+                                <p>Loading doctor information...</p>
+                            </div>
+                        }
+                        else if (DoctorInfo != null)
+                        {
+                            <div class="text-center">
+                                <Icon Name="IconName.User" Style="font-size: 4rem; color: #007bff;" />
+                                <h4 class="mt-3">@DoctorInfo.Name @DoctorInfo.Surname</h4>
+                                <p class="text-muted">@DoctorInfo.Email</p>
+                                
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">Account Created:</span>
+                                        <span>@DoctorInfo.CreationTime.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    
+                                </div>
+                                
+                                @if (PatientConversations.Any())
+                                {
+                                    <div class="mt-4 pt-3 border-top">
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <div class="stat-item">
+                                                    <h6 class="mb-0">@PatientConversations.Count</h6>
+                                                    <small class="text-muted">Total Questions</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="stat-item">
+                                                    <h6 class="mb-0">@PatientConversations.Count(c => c.IsCompleted)</h6>
+                                                    <small class="text-muted">Completed</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
 
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-4">
-        <div class="card h-100 w-100 d-flex flex-column">
-            <div class="card-header">
-                <div class="card-title text-body">Follow us on Social Media</div>
-            </div>
-            <div class="card-body pt-0">
-                <div>
-                    <table class="table mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <img src="/images/getting-started/x-white.svg" class="me-2" style="background-color: black;">
-                                    <div>X.com</div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://twitter.com/abpframework" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <img src="/images/getting-started/discord.svg" class="me-2">
-                                    <div>Discord</div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://abp.io/community/discord" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <img src="/images/getting-started/stack-overflow.svg" class="me-2">
-                                    <div>Stack Overflow</div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://stackoverflow.com/questions/tagged/abp" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex">
-                                    <img src="/images/getting-started/youtube.svg" class="me-2">
-                                    <div>YouTube</div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25">
-                                    <a href="https://www.youtube.com/@@Volosoft" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-0 d-flex border-bottom-0">
-                                    <img src="/images/getting-started/instagram.svg" class="me-2">
-                                    <div>Instagram</div>
-                                </td>
-                                <td class="text-end pe-0 opacity-25
-                                    border-bottom-0">
-                                    <a href="https://www.instagram.com/abpframework/" target="_blank">
-                                        <i class="fa fa-external-link
-                                            text-dark"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                            <div class="text-center text-muted p-3">
+                                <Icon Name="IconName.User" Style="font-size: 3rem; opacity: 0.3;" />
+                                <p>No doctor information available.</p>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ConversationDto> PatientConversations = new();
+    private IdentityUserDto? DoctorInfo = null;
+    private bool IsLoadingConversations = false;
+    private bool IsLoadingDoctor = false;
+    //Doctor
+    private List<IdentityUserDto> DoctorPatients = new();
+    private List<ConversationDto> AllConversations = new();
+    private bool IsLoadingDoctorInfo = false;
+    private bool IsLoadingPatients = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        // Load doctor data if user is authorized (i.e., is a doctor)
+        if (CurrentUser.IsAuthenticated && await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
+        {
+            await LoadDoctorDataAsync();
+        }
+        else if (CurrentUser.IsAuthenticated)
+        {
+            await LoadPatientDataAsync();
+        }
+    }
+
+    private async Task LoadDoctorDataAsync()
+    {
+        if (!CurrentUser.Id.HasValue)
+            return;
+        IsLoadingDoctorInfo = true;
+        IsLoadingPatients = true;
+        IsLoadingConversations = true;
+        StateHasChanged();
+
+        try
+        {
+            var allUsersResult = await IdentityUserAppService.GetListAsync(new GetIdentityUsersInput
+            {
+                MaxResultCount = 1000
+            });
+
+            DoctorPatients = allUsersResult.Items.Where(user => user.CreatorId == CurrentUser.Id.Value).ToList();
+
+            var conversationResult = await ConversationAppService.GetListAsync(new GetConversationsInput
+            {
+                MaxResultCount = 1000
+            });
+
+            var patientIds = DoctorPatients.Select(p => p.Id).ToHashSet();
+            AllConversations = conversationResult.Items.Where(c => patientIds.Contains(c.CustomerId)).ToList();
+        }
+        catch(Exception ex)
+        {
+            await HandleErrorAsync(ex);
+            Logger.LogError("Error loading doctor data");
+        }
+        finally
+        {
+            IsLoadingDoctorInfo = false;
+            IsLoadingPatients = false;
+            IsLoadingConversations = false;
+            StateHasChanged();
+        }   
+
+    }
+    private async Task LoadPatientDataAsync()
+    {
+        if (!CurrentUser.Id.HasValue)
+            return;
+
+        IsLoadingConversations = true;
+        IsLoadingDoctor = true;
+        StateHasChanged();
+
+        try
+        {
+            // Load patient's conversations
+            var conversationsResult = await ConversationAppService.GetByCustomerIdAsync(CurrentUser.Id.Value);
+            PatientConversations = conversationsResult.Items.ToList();
+            
+            // Load doctor information (the user who created this patient account)
+            await LoadDoctorInfoFromConversations();
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+        finally
+        {
+            IsLoadingConversations = false;
+            IsLoadingDoctor = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDoctorInfoFromConversations()
+    {
+        try
+        {
+            // Get doctor info from the first conversation that has doctor information
+            var conversationWithDoctor = PatientConversations
+                .FirstOrDefault(c => c.DoctorId.HasValue);
+            
+            if (conversationWithDoctor?.DoctorId != null)
+            {
+                try
+                {
+                    DoctorInfo = await IdentityUserAppService.GetAsync(conversationWithDoctor.DoctorId.Value);
+                    Logger.LogInformation($"Doctor found: {DoctorInfo?.Name} {DoctorInfo?.Surname}");
+                }
+                catch (Exception doctorEx)
+                {
+                    Logger.LogWarning($"Failed to get doctor details: {doctorEx.Message}");
+                    
+                    // Fallback: Create a mock DoctorInfo from conversation data
+                    if (!string.IsNullOrEmpty(conversationWithDoctor.DoctorName))
+                    {
+                        var nameParts = conversationWithDoctor.DoctorName.Split(' ', 2);
+                        DoctorInfo = new IdentityUserDto
+                        {
+                            Id = conversationWithDoctor.DoctorId.Value,
+                            Name = nameParts.Length > 0 ? nameParts[0] : "Doctor",
+                            Surname = nameParts.Length > 1 ? nameParts[1] : "",
+                            UserName = "doctor",
+                            Email = "doctor@hospital.com" // You might want to store this in conversation
+                        };
+                    }
+                }
+            }
+            else
+            {
+                Logger.LogWarning("No conversations with doctor information found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading doctor info from conversations");
+            DoctorInfo = null;
+        }
+    }
+}
+
+<style>
+    .conversation-item {
+        border-left: 4px solid #007bff;
+        transition: transform 0.2s ease;
+    }
+
+    .conversation-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .conversation-list {
+        padding-right: 0.5rem;
+    }
+
+    .conversation-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .conversation-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .conversation-list::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .conversation-list::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+</style>
