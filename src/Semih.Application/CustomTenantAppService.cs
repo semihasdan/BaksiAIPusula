@@ -50,7 +50,6 @@ namespace Semih.TenantManagement
             // **********************************************************************************************************
             
             // Non-admin users: filter by creator
-            // Non-admin users: filter by creator
             // Get all tenants first using base implementation
             var allTenantsInput = new GetTenantsInput 
             { 

@@ -163,7 +163,7 @@
                             <div class="message-section mb-3">
                                 <div class="message-header">
                                     <Icon Name="IconName.User" class="text-primary" />
-                                    <strong>User Question:</strong>
+                                    <strong>@SelectedUser?.UserName</strong> @* <-- DEĞİŞİKLİK BURADA *@
                                 </div>
                                 <div class="message-content p-2 bg-light rounded">
                                     @conversation.CustomerQuestion
@@ -248,7 +248,7 @@
     private List<ConversationDto> ConversationHistory = new();
     private Dictionary<Guid, string> _tempDoctorNotes = new();
     private bool IsLoading = false;
-
+    
     protected override async Task OnInitializedAsync()
     {
         await LoadUsersAsync();

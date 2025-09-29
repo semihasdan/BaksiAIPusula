@@ -112,6 +112,7 @@ public static class SemihModuleExtensionConfigurator
                         property =>
                         {
                             property.Attributes.Add(new StringLengthAttribute(1000));
+                            property.Attributes.Add(new DataTypeAttribute(DataType.MultilineText));
                             property.UI.OnTable.IsVisible = true;
                             property.UI.OnCreateForm.IsVisible = true;
                             property.UI.OnEditForm.IsVisible = true;

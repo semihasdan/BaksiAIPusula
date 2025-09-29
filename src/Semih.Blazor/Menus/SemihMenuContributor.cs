@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿﻿using System.Threading.Tasks;
 using Semih.Localization;
 using Semih.Permissions;
 using Semih.MultiTenancy;
@@ -7,7 +7,6 @@ using Volo.Abp.UI.Navigation;
 using Volo.Abp.SettingManagement.Blazor.Menus;
 using Volo.Abp.TenantManagement.Blazor.Navigation;
 using Volo.Abp.Identity.Blazor;
-using Semih.Permissions;
 using Volo.Abp.Users;
 
 namespace Semih.Blazor.Menus;
@@ -34,16 +33,33 @@ public class SemihMenuContributor : IMenuContributor
         var l = context.GetLocalizer<SemihResource>();
         
         // Ana sayfa menüsü her zaman görünür
-        context.Menu.Items.Insert(
-            0,
-            new ApplicationMenuItem(
-                SemihMenus.Home,
-                l["Menu:Home"],
-                "/",
-                icon: "fas fa-home",
-                order: 1
-            )
-        );
+        if (await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
+        {
+            context.Menu.Items.Insert(
+                0,
+                new ApplicationMenuItem(
+                    SemihMenus.Home,
+                    l["Menu:Home"],
+                    "/",
+                    icon: "fas fa-home",
+                    order: 1
+                )
+            );   
+        }
+        
+        if (!await _permissionChecker.IsGrantedAsync(SemihPermissions.Doctors.Default))
+        {
+            context.Menu.Items.Insert(
+                0,
+                new ApplicationMenuItem(
+                    SemihMenus.Home,
+                    "Patient Home Page",
+                    "/",
+                    icon: "fas fa-home",
+                    order: 1
+                )
+            );   
+        }
 
         // Yönetim menüsü
         var administration = context.Menu.GetAdministration();
@@ -74,12 +90,13 @@ public class SemihMenuContributor : IMenuContributor
             context.Menu.AddItem(
                 new ApplicationMenuItem(
                     "Semih.Doctors",
-                    "AI Communications",
+                    "Ask AI",
                     url: "/ask-ai",
                     icon: "menu-icon-ai"
                 )
             );
         }
+        
 
         administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);
         administration.SetSubItemOrder(SettingManagementMenus.GroupName, 3);

@@ -12,6 +12,7 @@ namespace Semih.Conversations
         public bool IsCompleted { get; set; } // True when doctor has added their note
         public DateTime ConversationStartTime { get; set; }
         public DateTime? ConversationEndTime { get; set; }
+        public Guid? DoctorId { get; set; } 
 
         protected Conversation()
         {
@@ -22,11 +23,13 @@ namespace Semih.Conversations
             Guid id,
             Guid customerId,
             string customerQuestion,
-            string aiResponse) : base(id)
+            string aiResponse,
+            Guid? doctorId = null) : base(id)
         {
             CustomerId = customerId;
             CustomerQuestion = customerQuestion;
             AiResponse = aiResponse;
+            DoctorId = doctorId;
             IsCompleted = false;
             ConversationStartTime = DateTime.UtcNow;
         }

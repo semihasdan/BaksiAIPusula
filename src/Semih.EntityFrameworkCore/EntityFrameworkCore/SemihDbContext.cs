@@ -92,6 +92,7 @@ public class SemihDbContext :
             b.HasIndex(x => x.CustomerId);
             b.HasIndex(x => x.IsCompleted);
             b.HasIndex(x => x.ConversationStartTime);
+            b.HasIndex(x => x.DoctorId);
         });
     }
 }
